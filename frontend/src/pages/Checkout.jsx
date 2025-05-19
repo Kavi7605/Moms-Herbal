@@ -1,67 +1,128 @@
-import { useState } from "react";
-import { useCart } from "../context/CartContext";
+import { useContext, useState } from "react";
+import { CartContext } from "../contexts/CartContext";
 import { useNavigate } from "react-router-dom";
 
 export default function Checkout() {
-    const { cartItems, clearCart } = useCart();
-    const [form, setForm] = useState({ name: "", address: "", phone: "" });
+    const { cartItems, clearCart } = useContext(CartContext);
     const navigate = useNavigate();
 
-    const total = cartItems.reduce(
+    const [form, setForm] = useState({
+        fullName: "",
+        address: "",
+        phone: "",
+        email: "",
+        city: "",
+        pincode: "",
+    });
+
+    const totalAmount = cartItems.reduce(
         (sum, item) => sum + item.price * item.quantity,
         0
     );
 
-    function handleChange(e) {
+    const handleChange = (e) => {
         setForm({ ...form, [e.target.name]: e.target.value });
-    }
+    };
 
-    function handleSubmit(e) {
+    const handleSubmit = (e) => {
         e.preventDefault();
-        // Save to backend here later (optional)
-        clearCart();
-        navigate("/order-success", { state: { ...form, total } });
-    }
 
-    if (cartItems.length === 0) {
-        return <p className="text-gray-500">Cart is empty. Please add items first.</p>;
-    }
+        const order = {
+            customerName: form.fullName,
+            address: `${form.address}, ${form.city} - ${form.pincode}`,
+            phone: form.phone,
+            totalAmount: totalAmount,
+            items: cartItems.map((item) => item.name),
+        };
+
+        fetch("http://localhost:8081/api/orders", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(order),
+        })
+            .then((res) => {
+                if (res.ok) {
+                    alert("Order placed successfully!");
+                    clearCart();
+                    navigate("/");
+                } else {
+                    alert("Failed to place order.");
+                }
+            })
+            .catch((err) => console.error("Order error:", err));
+    };
 
     return (
-        <div>
-            <h1 className="text-2xl font-bold mb-4">Checkout</h1>
-            <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
+        <div className="max-w-xl mx-auto mt-8">
+            <h1 className="text-2xl font-bold mb-6 text-center">Checkout</h1>
+            <form onSubmit={handleSubmit} className="space-y-4">
+
                 <input
-                    type="text"
-                    name="name"
-                    required
+                    name="fullName"
                     placeholder="Full Name"
-                    className="w-full p-2 border rounded"
-                    value={form.name}
+                    value={form.fullName}
                     onChange={handleChange}
-                />
-                <textarea
-                    name="address"
+                    className="w-full p-2 border rounded"
                     required
-                    placeholder="Shipping Address"
-                    className="w-full p-2 border rounded"
-                    value={form.address}
-                    onChange={handleChange}
                 />
+
                 <input
-                    type="tel"
-                    name="phone"
-                    required
-                    placeholder="Phone Number"
+                    name="email"
+                    type="email"
+                    placeholder="Email"
+                    value={form.email}
+                    onChange={handleChange}
                     className="w-full p-2 border rounded"
+                    required
+                />
+
+                <input
+                    name="phone"
+                    placeholder="Phone Number"
                     value={form.phone}
                     onChange={handleChange}
+                    className="w-full p-2 border rounded"
+                    required
                 />
-                <button className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800">
+
+                <textarea
+                    name="address"
+                    placeholder="Address"
+                    value={form.address}
+                    onChange={handleChange}
+                    className="w-full p-2 border rounded"
+                    required
+                />
+
+                <input
+                    name="city"
+                    placeholder="City"
+                    value={form.city}
+                    onChange={handleChange}
+                    className="w-full p-2 border rounded"
+                    required
+                />
+
+                <input
+                    name="pincode"
+                    placeholder="Pincode"
+                    value={form.pincode}
+                    onChange={handleChange}
+                    className="w-full p-2 border rounded"
+                    required
+                />
+
+                <div className="text-right font-semibold text-green-600">
+                    Total: ₹{totalAmount}
+                </div>
+
+                <button
+                    type="submit"
+                    className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
+                >
                     Place Order
                 </button>
             </form>
-            <p className="mt-6 font-semibold">Total: ₹{total}</p>
         </div>
     );
 }
