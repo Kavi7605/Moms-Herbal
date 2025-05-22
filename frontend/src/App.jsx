@@ -5,6 +5,7 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import OrderSuccess from "./pages/OrderSuccess";
 import Layout from "./components/Layout"; // ✅
+import AdminOrders from "./pages/AdminOrders";
 
 export default function App() {
     return (
@@ -15,6 +16,7 @@ export default function App() {
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/order-success" element={<OrderSuccess />} />
+                <Route path="/admin/orders" element={<AdminOrders />} />
             </Routes>
         </Layout>
     );
